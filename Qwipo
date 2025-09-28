@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qwipo B2B Marketplace — Custom Location Version</title>
+<style>
+body { font-family: Arial; margin: 20px; background: #f4f4f4; }
+h1,h2 { text-align: center; }
+.section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; max-width: 800px; margin-left:auto;margin-right:auto; }
+label { display: block; margin-top: 10px; }
+select,input,button { padding: 8px; margin-top: 5px; width: 100%; }
+.products { display: grid; grid-template-columns: repeat(auto-fill,minmax(150px,1fr)); gap: 10px; }
+.product { padding: 10px; background: #eef; border-radius: 6px; text-align: center; }
+.cart { background: #ffd; padding: 10px; border-radius: 6px; }
+.cart-item { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.btn { background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+.btn:hover { background: #0056b3; }
+.confirmation { padding: 15px; background: #d4edda; color: #155724; border-radius: 6px; display: none; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<h1>Qwipo B2B Marketplace</h1>
+
+<div class="section">
+  <h2>Retailer Order Panel</h2>
+  <label for="location">Add Your Own Delivery Location:</label>
+  <input type="text" id="customLocation" placeholder="Enter your location" />
+  <button onclick="addLocation()" class="btn">Add Location</button>
+  <ul id="locationList"></ul>
+
+  <label for="business">Select Business Type(s):</label>
+  <select id="business" multiple></select>
+  <p class="muted small">Hold Ctrl / Cmd to multi-select.</p>
+
+  <button onclick="loadProducts()" class="btn">Load Products</button>
+</div>
+
+<div class="section">
+  <h2>Recommended Products</h2>
+  <div id="productList" class="products"></div>
+</div>
+
+<div class="section">
+  <h2>Your Cart</h2>
+  <div id="cart" class="cart"></div>
+  <button class="btn" onclick="placeOrder()">Place Order</button>
+  <div id="confirmation" class="confirmation">✅ Order placed successfully!</div>
+</div>
+
+<div class="section">
+  <h2>Order History</h2>
+  <div id="orderHistory" class="cart"></div>
+</div>
+
+<script>
+const productsData = {
+  Medicals: ["Paracetamol", "Vitamin C", "Sanitizer"],
+  Bakers: ["Bread", "Cake", "Biscuits"],
+  Restaurants: ["Rice Bag", "Cooking Oil", "Spices"]
+};
+
+let cart = [];
+let orderHistory = [];
+let locations = [];
+
+const businessSelect = document.getElementById("business");
+const locationListEl = document.getElementById("locationList");
+
+function populateSelections(){
+  Object.keys(productsData).forEach(b=>{
+    let opt = document.createElement("option"); opt.value=b; opt.text=b; businessSelect.add(opt);
+  });
+}
+
+function addLocation(){
+  const loc = document.getElementById("customLocation").value.trim();
+  if(!loc) return;
+  locations.push(loc);
+  renderLocations();
+  document.getElementById("customLocation").value="";
+}
+
+function renderLocations(){
+  locationListEl.innerHTML="";
+  locations.forEach((loc,i)=>{
+    const li=document.createElement("li");
+    li.textContent=loc;
+    locationListEl.appendChild(li);
+  });
+}
+
+function loadProducts(){
+  const productList = document.getElementById("productList");
+  productList.innerHTML="";
+  const selected = Array.from(businessSelect.selectedOptions).map(o=>o.value);
+  selected.forEach(b=>{
+    productsData[b].forEach(item=>{
+      const div=document.createElement("div");
+      div.className="product";
+      div.innerHTML=<p>${item}</p><button class='btn' onclick='addToCart("${item}")'>Add to Cart</button>;
+      productList.appendChild(div);
+    });
+  });
+}
+
+function addToCart(item){ cart.push(item); renderCart(); }
+
+function renderCart(){
+  const cartDiv = document.getElementById("cart"); cartDiv.innerHTML="";
+  cart.forEach((item,i)=>{
+    const div=document.createElement("div");
+    div.className="cart-item";
+    div.innerHTML=<span>${item}</span><button class='btn' onclick='removeFromCart(${i})'>Remove</button>;
+    cartDiv.appendChild(div);
+  });
+}
+
+function removeFromCart(i){ cart.splice(i,1); renderCart(); }
+
+function placeOrder(){
+  if(cart.length===0){ alert("Cart is empty!"); return; }
+  orderHistory.push({locations:[...locations],business:Array.from(businessSelect.selectedOptions).map(o=>o.value),items:[...cart]});
+  cart=[]; renderCart(); renderOrderHistory();
+  document.getElementById("confirmation").style.display="block";
+  setTimeout(()=>{document.getElementById("confirmation").style.display="none";},3000);
+}
+
+function renderOrderHistory(){
+  const historyDiv = document.getElementById("orderHistory");
+  historyDiv.innerHTML="";
+  orderHistory.forEach((order,i)=>{
+    const div=document.createElement("div");
+    div.className="cart-item";
+    div.innerHTML=<strong>Order ${i+1}</strong> • Locations: ${order.locations.join(", ")} • Businesses: ${order.business.join(", ")}<br>Items: ${order.items.join(", ")};
+    historyDiv.appendChild(div);
+  });
+}
+
+populateSelections();
+loadProducts();
+</script>
+</body>
+</html>
